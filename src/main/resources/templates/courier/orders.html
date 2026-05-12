@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Kurye atanan siparişler: CourierController GET /courier/orders. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Teslimatlarım')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+  <section class="page-hero mb-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <div>
+        <h1 class="h3 mb-1">Teslimatlarım</h1>
+        <div class="subtitle small">Atanan siparişleri görüntüleyin ve teslimat durumunu güncelleyin.</div>
+      </div>
+      <a class="btn btn-outline-secondary" th:href="@{/orders}">
+        <i class="bi bi-receipt me-1"></i>Siparişler
+      </a>
+    </div>
+  </section>
+
+  <div th:if="${#lists.isEmpty(orders)}" class="alert alert-light border">Atanmış sipariş yok.</div>
+  <div class="row g-3" th:if="${!#lists.isEmpty(orders)}">
+    <div class="col-md-6" th:each="order : ${orders}">
+      <div class="card product-card h-100">
+        <div class="card-body">
+          <div class="d-flex align-items-start justify-content-between gap-2">
+            <div>
+              <div class="fw-semibold" th:text="'Sipariş #' + ${order.id}">Sipariş</div>
+              <div class="small text-muted" th:text="${#temporals.format(order.orderDateTime, 'dd.MM.yyyy HH:mm')}">Tarih</div>
+            </div>
+            <span class="badge badge-soft" th:text="${order.status.displayName}">Durum</span>
+          </div>
+
+          <div class="mt-3 small">
+            <div><span class="text-muted">Müşteri:</span> <span class="fw-semibold" th:text="${order.customerName}"></span></div>
+            <div class="mt-1"><span class="text-muted">Adres:</span> <span th:text="${order.address}"></span></div>
+          </div>
+
+          <div class="d-flex gap-2 mt-3">
+            <a th:href="@{/orders/{id}(id=${order.id})}" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-card-text me-1"></i>Detay
+            </a>
+            <a th:href="|https://www.google.com/maps/dir/?api=1&destination=${order.address}|"
+               target="_blank" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-geo-alt me-1"></i>Yol Tarifi
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

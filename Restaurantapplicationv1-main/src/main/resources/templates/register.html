@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Register')}"></head>
+<body class="bg-light">
+<main class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-3 text-center">Create Account</h1>
+                    <div th:replace="~{fragments/layout :: alerts}"></div>
+                    <form th:action="@{/register}" th:object="${registerForm}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input id="username" th:field="*{username}" class="form-control" th:classappend="${#fields.hasErrors('username')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{username}"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input id="password" th:field="*{password}" type="password" class="form-control" th:classappend="${#fields.hasErrors('password')} ? 'is-invalid'">
+                            <div class="invalid-feedback" th:errors="*{password}"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label">Role</label>
+                            <select id="role" th:field="*{role}" class="form-select" th:classappend="${#fields.hasErrors('role')} ? 'is-invalid'">
+                                <option th:each="role : ${roles}" th:value="${role}" th:text="${role}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{role}"></div>
+                        </div>
+                        <button class="btn btn-primary w-100" type="submit">Sign Up</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <a th:href="@{/login}">Back to login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

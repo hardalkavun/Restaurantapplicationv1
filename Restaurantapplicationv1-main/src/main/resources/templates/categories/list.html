@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Categories')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Categories</h1>
+        <a class="btn btn-primary" th:href="@{/categories/new}">Add Category</a>
+    </div>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr><th>ID</th><th>Name</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="category : ${categories}">
+                    <td th:text="${category.id}">1</td>
+                    <td th:text="${category.name}">Main Dishes</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{/categories/{id}/edit(id=${category.id})}">Edit</a>
+                        <form th:action="@{/categories/{id}/delete(id=${category.id})}" method="post" class="d-inline">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(categories)}"><td colspan="3" class="text-center text-muted py-4">No categories found.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!doctype html>
+<!-- Sepetli yeni sipariş: /orders/create-cart veya /orders/new; yönetici. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body class="food-background">
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <section class="page-hero mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h1 class="h3 mb-1" th:text="${pageTitle}">Yeni Sipariş</h1>
+                <div class="subtitle small">Sepete ürün ekleyip siparişi kaydedin.</div>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/orders}">
+                <i class="bi bi-arrow-left me-1"></i>Siparişlere Dön
+            </a>
+        </div>
+    </section>
+    <div class="row g-4">
+        <!-- Ürün Kataloğu (sol) -->
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h2 class="h5 mb-0">Menü</h2>
+                <span class="badge badge-soft">Sepete eklemek için “Ekle”</span>
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4" th:each="product : ${products}">
+                    <div class="card product-card h-100">
+                        <div class="product-image-wrap">
+                            <img th:if="${product.hasImage()}"
+                                 class="product-image"
+                                 th:src="@{/products/{id}/image(id=${product.id})}"
+                                 th:alt="${product.name}">
+                            <div th:unless="${product.hasImage()}"
+                                 class="product-image product-placeholder d-flex align-items-center justify-content-center text-muted small user-select-none"
+                                 role="img"
+                                 th:attr="aria-label=${'Görsel yok: ' + product.name}">
+                                <span><i class="bi bi-image me-1"></i>Görsel yok</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <h5 class="card-title mb-1" th:text="${product.name}">Ürün</h5>
+                                <span class="badge badge-soft" th:text="${product.category.name}">Kategori</span>
+                            </div>
+                            <p class="card-text small text-muted line-clamp-2" th:text="${product.description != null ? product.description : '—'}">Desc</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold" th:text="${#numbers.formatDecimal(product.price,1,2)} + ' ₺'"></span>
+                                <button class="btn btn-sm btn-outline-primary add-to-cart"
+                                        th:data-id="${product.id}"
+                                        th:data-name="${product.name}"
+                                        th:data-price="${product.price}">
+                                    <i class="bi bi-cart-plus me-1"></i> Ekle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sepet Paneli (sağ) -->
+        <div class="col-lg-4">
+            <div class="card sticky-top cart-card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h2 class="h5 mb-0"><i class="bi bi-basket2 me-2"></i>Sepet</h2>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clearCartBtn">Temizle</button>
+                    </div>
+                    <ul id="cartItems" class="list-group mb-3">
+                        <!-- Sepet içeriği buraya JavaScript ile doldurulacak -->
+                    </ul>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span>Toplam:</span>
+                        <strong id="cartTotal">0.00 ₺</strong>
+                    </div>
+                    <hr>
+                    <!-- Müşteri ve Kurye Bilgileri -->
+                    <form id="orderForm" th:action="@{/orders}" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <!-- productIds hidden inputları bu konteynere eklenecek -->
+                        <div id="productIdsContainer"></div>
+                        <div class="mb-3">
+                            <label class="form-label">Müşteri adı</label>
+                            <input name="customerName" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Telefon</label>
+                            <input name="customerPhone" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Adres</label>
+                            <textarea name="address" class="form-control" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kurye</label>
+                            <select name="assignedCourierId" class="form-select">
+                                <option value="">Atanmadı</option>
+                                <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${c.username}"></option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Not</label>
+                            <input name="notes" class="form-control">
+                        </div>
+                        <div class="alert alert-danger py-2 small d-none" id="cartError"></div>
+                        <button type="submit" class="btn btn-primary w-100">Siparişi Kaydet</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const cart = [];
+    const cartItemsEl = document.getElementById('cartItems');
+    const cartTotalEl = document.getElementById('cartTotal');
+    const productIdsContainer = document.getElementById('productIdsContainer');
+    const clearCartBtn = document.getElementById('clearCartBtn');
+    const cartErrorEl = document.getElementById('cartError');
+    const orderForm = document.getElementById('orderForm');
+
+    document.querySelectorAll('.add-to-cart').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const name = btn.dataset.name;
+            const price = parseFloat(btn.dataset.price);
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({ id, name, price, quantity: 1 });
+            }
+            hideError();
+            renderCart();
+        });
+    });
+
+    clearCartBtn.addEventListener('click', () => {
+        cart.splice(0, cart.length);
+        hideError();
+        renderCart();
+    });
+
+    orderForm.addEventListener('submit', (e) => {
+        hideError();
+        if (cart.length === 0) {
+            e.preventDefault();
+            showError('Sepet boş. En az bir ürün ekleyin.');
+        }
+    });
+
+    function renderCart() {
+        cartItemsEl.innerHTML = '';
+        let total = 0;
+        if (cart.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'list-group-item text-muted small';
+            empty.textContent = 'Sepet boş.';
+            cartItemsEl.appendChild(empty);
+        }
+        cart.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.innerHTML = `
+                <div>
+                    <span>${item.name}</span>
+                    <small class="text-muted"> x${item.quantity}</small>
+                </div>
+                <div>
+                    <span>${(item.price * item.quantity).toFixed(2)} ₺</span>
+                    <button class="btn btn-sm btn-outline-danger ms-2" data-id="${item.id}">X</button>
+                </div>`;
+            li.querySelector('button').addEventListener('click', () => {
+                removeFromCart(item.id);
+            });
+            cartItemsEl.appendChild(li);
+            total += item.price * item.quantity;
+        });
+        cartTotalEl.textContent = total.toFixed(2) + ' ₺';
+
+        // Hidden inputları güncelle (her ürün adedi kadar)
+        productIdsContainer.innerHTML = '';
+        cart.forEach(item => {
+            for (let i = 0; i < item.quantity; i++) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'productIds';
+                input.value = item.id;
+                productIdsContainer.appendChild(input);
+            }
+        });
+    }
+
+    function removeFromCart(id) {
+        const index = cart.findIndex(i => i.id === id);
+        if (index > -1) {
+            if (cart[index].quantity > 1) {
+                cart[index].quantity--;
+            } else {
+                cart.splice(index, 1);
+            }
+        }
+        renderCart();
+    }
+
+    function showError(msg) {
+        cartErrorEl.textContent = msg;
+        cartErrorEl.classList.remove('d-none');
+    }
+
+    function hideError() {
+        cartErrorEl.classList.add('d-none');
+        cartErrorEl.textContent = '';
+    }
+
+    renderCart();
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Order Detail')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0" th:text="${'Order #' + order.id}">Order Detail</h1>
+        <a class="btn btn-outline-secondary" th:href="@{/orders}">Back</a>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5">Customer</h2>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4" th:if="${order.customer != null}">Account</dt>
+                        <dd class="col-sm-8" th:if="${order.customer != null}" th:text="${order.customer.username}">customer</dd>
+                        <dt class="col-sm-4">Name</dt><dd class="col-sm-8" th:text="${order.customerName}">Customer</dd>
+                        <dt class="col-sm-4">Phone</dt><dd class="col-sm-8" th:text="${order.customerPhone}">Phone</dd>
+                        <dt class="col-sm-4">Address</dt><dd class="col-sm-8" th:text="${order.address}">Address</dd>
+                        <dt class="col-sm-4">Date</dt><dd class="col-sm-8" th:text="${#temporals.format(order.orderDateTime, 'yyyy-MM-dd HH:mm')}">Date</dd>
+                        <dt class="col-sm-4">Status</dt><dd class="col-sm-8" th:text="${#strings.replace(order.status.name(), '_', ' ')}">Status</dd>
+                        <dt class="col-sm-4">Courier</dt><dd class="col-sm-8" th:text="${order.assignedCourier != null ? order.assignedCourier.username : 'Unassigned'}">Courier</dd>
+                        <dt class="col-sm-4">Notes</dt><dd class="col-sm-8" th:text="${order.notes != null ? order.notes : '-'}">Notes</dd>
+                    </dl>
+
+                    <form th:if="${isCourier and order.status.name() != 'DELIVERED' and order.status.name() != 'CANCELLED' and order.status.name() != 'PENDING'}"
+                          th:action="@{/orders/{id}/status(id=${order.id})}" method="post" class="d-flex gap-2 mt-3">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <select name="status" class="form-select">
+                            <option th:each="status : ${courierStatuses}" th:value="${status}" th:text="${#strings.replace(status.name(), '_', ' ')}" th:selected="${status == order.status}"></option>
+                        </select>
+                        <button class="btn btn-outline-primary" type="submit">Update Status</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Ordered Products</h2>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item px-0 d-flex align-items-center gap-3" th:each="product : ${order.products}">
+                            <img th:if="${product.hasImage()}" class="detail-image" th:src="@{/products/{id}/image(id=${product.id})}" th:alt="${product.name}">
+                            <div th:unless="${product.hasImage()}" class="empty-image">No image</div>
+                            <div>
+                                <div class="fw-semibold" th:text="${product.name}">Product</div>
+                                <div class="text-muted small" th:text="${product.category.name}">Category</div>
+                                <div th:text="${#numbers.formatDecimal(product.price, 1, 2)}">0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-12" th:if="${isManager and customerHistory != null}">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Customer Order History</h2>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                            <tr><th>ID</th><th>Date</th><th>Status</th><th>Courier</th><th class="text-end">Detail</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="historyOrder : ${customerHistory}">
+                                <td th:text="${historyOrder.id}">1</td>
+                                <td th:text="${#temporals.format(historyOrder.orderDateTime, 'yyyy-MM-dd HH:mm')}">Date</td>
+                                <td th:text="${#strings.replace(historyOrder.status.name(), '_', ' ')}">Status</td>
+                                <td th:text="${historyOrder.assignedCourier != null ? historyOrder.assignedCourier.username : 'Unassigned'}">Courier</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-secondary" th:href="@{/orders/{id}(id=${historyOrder.id})}">Open</a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

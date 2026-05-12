@@ -1,0 +1,95 @@
+<!doctype html>
+<!-- Ürün listesi ve arama: ProductController GET /products. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Ürünler')}"></head>
+<body class="food-background">
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <section class="page-hero mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h1 class="h3 mb-1">Ürünler</h1>
+                <div class="subtitle small">Menü ürünlerini, görselleri ve satış durumunu yönetin.</div>
+            </div>
+            <a class="btn btn-primary" th:href="@{/products/new}">
+                <i class="bi bi-plus-circle me-1"></i>Ürün Ekle
+            </a>
+        </div>
+    </section>
+
+    <form class="card card-body border-0 shadow-sm mb-3" th:action="@{/products}" method="get">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label">Ürün adı</label>
+                <input name="name" class="form-control" placeholder="Ürün ara..." th:value="${name}">
+            </div>
+            <div class="col-md-5">
+                <label class="form-label">Kategori</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">Tüm kategoriler</option>
+                    <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                            th:selected="${categoryId != null and categoryId == c.id}"></option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-outline-primary flex-fill" type="submit">
+                    <i class="bi bi-funnel me-1"></i>Filtrele
+                </button>
+                <a class="btn btn-outline-secondary" th:href="@{/products}">Temizle</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="row g-3">
+        <div class="col-12 col-md-6 col-xl-4" th:each="product : ${products}">
+            <div class="card product-card h-100">
+                <div class="product-image-wrap">
+                    <img th:if="${product.hasImage()}" class="product-image"
+                         th:src="@{/products/{id}/image(id=${product.id})}" th:alt="${product.name}">
+                    <div th:unless="${product.hasImage()}"
+                         class="product-image product-placeholder d-flex align-items-center justify-content-center text-muted small user-select-none"
+                         role="img"
+                         th:attr="aria-label=${'Görsel yok: ' + product.name}">
+                        <span><i class="bi bi-image me-1"></i>Görsel yok</span>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex align-items-start justify-content-between gap-2">
+                        <div class="min-w-0">
+                            <div class="fw-semibold" th:text="${product.name}">Ürün</div>
+                            <div class="small text-muted" th:text="${product.category.name}">Kategori</div>
+                        </div>
+                        <span class="badge badge-soft" th:text="${product.active ? 'Aktif' : 'Pasif'}">Aktif</span>
+                    </div>
+                    <div class="small text-muted line-clamp-2 mt-2"
+                         th:text="${product.description != null ? product.description : '—'}">Desc</div>
+                    <div class="mt-auto pt-3 d-flex align-items-center justify-content-between">
+                        <div class="price" th:text="${#numbers.formatDecimal(product.price,1,2)} + ' ₺'">0 ₺</div>
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-primary" th:href="@{/products/{id}/edit(id=${product.id})}">
+                                <i class="bi bi-pencil-square"></i>
+                            </a>
+                            <form th:action="@{/products/{id}/delete(id=${product.id})}" method="post" class="d-inline">
+                                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button class="btn btn-sm btn-outline-danger" type="submit">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12" th:if="${#lists.isEmpty(products)}">
+            <div class="alert alert-light border mb-0">Ürün bulunamadı.</div>
+        </div>
+    </div>
+</main>
+
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<!-- Sipariş listesi ve filtreler: OrderController GET /orders. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Siparişler')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <section class="page-hero mb-3">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h1 class="h3 mb-1">Siparişler</h1>
+                <div class="subtitle small">Siparişleri filtreleyin ve durumlarını güncelleyin.</div>
+            </div>
+            <a th:if="${isManager}" class="btn btn-primary" th:href="@{/orders/new}">
+                <i class="bi bi-bag-plus me-1"></i>Sipariş Ekle
+            </a>
+        </div>
+    </section>
+
+    <form class="card card-body mb-3 border-0 shadow-sm" th:action="@{/orders}" method="get">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="customerName" class="form-label">Müşteri adı</label>
+                <input id="customerName" name="customerName" class="form-control" th:value="${customerName}">
+            </div>
+            <div class="col-md-3">
+                <label for="date" class="form-label">Sipariş tarihi</label>
+                <input id="date" name="date" type="date" class="form-control" th:value="${date}">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Durum</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">Tüm durumlar</option>
+                    <option th:each="status : ${statuses}" th:value="${status}" th:text="${status.displayName}" th:selected="${status == selectedStatus}"></option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-outline-primary flex-fill" type="submit">Filtrele</button>
+                <a class="btn btn-outline-secondary" th:href="@{/orders}">Temizle</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Müşteri</th>
+                    <th>Tarih</th>
+                    <th>Durum</th>
+                    <th>Kurye</th>
+                    <th class="text-end">İşlemler</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td th:text="${order.id}">1</td>
+                    <td>
+                        <div class="fw-semibold" th:text="${order.customerName}">Müşteri</div>
+                        <div class="small text-muted" th:text="${order.customerPhone}">Telefon</div>
+                    </td>
+                    <td th:text="${#temporals.format(order.orderDateTime, 'yyyy-MM-dd HH:mm')}">2026-05-07</td>
+                    <td>
+                        <form th:if="${isManager or (order.assignedCourier != null and order.assignedCourier.username == username)}" th:action="@{/orders/{id}/status(id=${order.id})}" method="post" class="d-flex gap-2">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <select name="status" class="form-select form-select-sm">
+                                <option th:each="status : ${statusOptions}" th:value="${status}" th:text="${status.displayName}" th:selected="${status == order.status}"></option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary" type="submit">Güncelle</button>
+                        </form>
+                        <span th:unless="${isManager or (order.assignedCourier != null and order.assignedCourier.username == username)}" class="badge text-bg-secondary" th:text="${order.status.displayName}">Durum</span>
+                    </td>
+                    <td th:text="${order.assignedCourier != null ? order.assignedCourier.username : 'Atanmadı'}">Kurye</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" th:href="@{/orders/{id}(id=${order.id})}">Detay</a>
+                        <a th:if="${isManager}" class="btn btn-sm btn-outline-primary" th:href="@{/orders/{id}/edit(id=${order.id})}">Düzenle</a>
+                        <form th:if="${isManager}" th:action="@{/orders/{id}/delete(id=${order.id})}" method="post" class="d-inline">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Sil</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(orders)}"><td colspan="6" class="text-center text-muted py-4">Sipariş bulunamadı.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

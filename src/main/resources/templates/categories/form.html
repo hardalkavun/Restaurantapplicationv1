@@ -1,0 +1,39 @@
+<!doctype html>
+<!-- Kategori oluşturma/düzenleme formu: /categories/new veya /categories/{id}/edit. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <section class="page-hero mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h1 class="h3 mb-1" th:text="${pageTitle}">Kategori</h1>
+                <div class="subtitle small">Menü filtreleri için kısa ve anlaşılır adlar kullanın.</div>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/categories}">
+                <i class="bi bi-arrow-left me-1"></i>Geri
+            </a>
+        </div>
+    </section>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <form th:action="${category.id == null} ? '/categories' : '/categories/' + category.id" th:object="${category}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="mb-3">
+                    <label class="form-label">Kategori adı</label>
+                    <input th:field="*{name}" class="form-control" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{name}"></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Kaydet</button>
+                    <a class="btn btn-outline-secondary" th:href="@{/categories}">Vazgeç</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

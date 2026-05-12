@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Login')}"></head>
+<body class="bg-light">
+<main class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="h4 mb-3 text-center">Restaurant Login</h1>
+                    <div th:replace="~{fragments/layout :: alerts}"></div>
+                    <form th:action="@{/login}" method="post">
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input id="username" name="username" class="form-control" autocomplete="username" required autofocus>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input id="password" name="password" type="password" class="form-control" autocomplete="current-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <div class="text-center mt-3">
+                        <a th:href="@{/register}">Create an account</a>
+                    </div>
+                    <div class="small text-muted mt-3">
+                        Sample users: manager / 1234, courier / 1234, customer / 1234
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

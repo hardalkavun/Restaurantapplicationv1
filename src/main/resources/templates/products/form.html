@@ -1,0 +1,80 @@
+<!doctype html>
+<!-- Ürün formu (DTO + dosya yükleme): /products/new veya /products/{id}/edit. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <section class="page-hero mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h1 class="h3 mb-1" th:text="${pageTitle}">Ürün</h1>
+                <div class="subtitle small">Ürün bilgilerini ve menüde görünme durumunu düzenleyin.</div>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/products}">
+                <i class="bi bi-arrow-left me-1"></i>Geri
+            </a>
+        </div>
+    </section>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <form th:action="${productForm.id == null} ? @{/products} : @{/products/{id}(id=${productForm.id})}" th:object="${productForm}" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="name" class="form-label">Ürün adı</label>
+                        <input id="name" th:field="*{name}" class="form-control" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{name}"></div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="price" class="form-label">Fiyat</label>
+                        <input id="price" th:field="*{price}" type="number" min="0.01" step="0.01" class="form-control" th:classappend="${#fields.hasErrors('price')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{price}"></div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="categoryId" class="form-label">Kategori</label>
+                        <select id="categoryId" th:field="*{categoryId}" class="form-select" th:classappend="${#fields.hasErrors('categoryId')} ? 'is-invalid'">
+                            <option value="">Kategori seçin</option>
+                            <option th:each="category : ${categories}" th:value="${category.id}" th:text="${category.name}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{categoryId}"></div>
+                    </div>
+                    <div class="col-12">
+                        <label for="description" class="form-label">Açıklama</label>
+                        <textarea id="description" th:field="*{description}" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="col-md-8">
+                        <label for="imageFile" class="form-label">Ürün görseli</label>
+                        <input id="imageFile" th:field="*{imageFile}" type="file" accept="image/*" class="form-control">
+                        <div class="form-text">Yüklenen görsel veritabanında saklanır.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label d-block">Satış durumu</label>
+                        <div class="form-check form-switch">
+                            <input id="active" th:field="*{active}" class="form-check-input" type="checkbox">
+                            <label for="active" class="form-check-label">Menüde görünsün</label>
+                        </div>
+                    </div>
+                    <div class="col-12" th:if="${product != null and product.hasImage()}">
+                        <div class="text-muted small mb-2">Mevcut görsel</div>
+                        <img class="product-thumb" th:src="@{/products/{id}/image(id=${product.id})}" th:alt="${product.name}">
+                    </div>
+                    <div class="col-12" th:if="${product == null or !product.hasImage()}">
+                        <div class="text-muted small mb-2">Henüz görsel yok. Ürün fotoğrafı göstermek için dosya yükleyin.</div>
+                        <div class="detail-image-placeholder rounded-3 d-flex align-items-center justify-content-center bg-light text-muted border">
+                            <span class="small text-center px-2"><i class="bi bi-image d-block mb-1"></i>Önizleme yok</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit">Kaydet</button>
+                    <a class="btn btn-outline-secondary" th:href="@{/products}">Vazgeç</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

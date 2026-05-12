@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <h1 class="h3 mb-3" th:text="${pageTitle}">Category</h1>
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${category.id == null} ? @{/categories} : @{/categories/{id}(id=${category.id})}" th:object="${category}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Name</label>
+                    <input id="name" th:field="*{name}" class="form-control" th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{name}"></div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                    <a class="btn btn-outline-secondary" th:href="@{/categories}">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

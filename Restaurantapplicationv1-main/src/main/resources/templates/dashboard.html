@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h3 mb-0">Dashboard</h1>
+    </div>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card"><div class="card-body"><div class="text-muted">Products</div><div class="display-6" th:text="${productCount}">0</div></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body"><div class="text-muted">Categories</div><div class="display-6" th:text="${categoryCount}">0</div></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body"><div class="text-muted">Orders</div><div class="display-6" th:text="${orderCount}">0</div></div></div>
+        </div>
+        <div class="col-md-3">
+            <div class="card"><div class="card-body"><div class="text-muted">Active Deliveries</div><div class="display-6" th:text="${preparingCount + onTheWayCount}">0</div></div></div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Customer Orders</h2>
+        <span class="badge text-bg-warning" th:text="${pendingCount + ' pending'}">0 pending</span>
+    </div>
+
+    <form class="card card-body mb-3" th:action="@{/dashboard}" method="get">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label for="customerName" class="form-label">Customer name</label>
+                <input id="customerName" name="customerName" class="form-control" th:value="${customerName}">
+            </div>
+            <div class="col-md-3">
+                <label for="date" class="form-label">Order date</label>
+                <input id="date" name="date" type="date" class="form-control" th:value="${date}">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">All statuses</option>
+                    <option th:each="status : ${statuses}" th:value="${status}" th:text="${#strings.replace(status.name(), '_', ' ')}" th:selected="${status == selectedStatus}"></option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-outline-primary flex-fill" type="submit">Filter</button>
+                <a class="btn btn-outline-secondary" th:href="@{/dashboard}">Clear</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Courier</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td th:text="${order.id}">1</td>
+                    <td>
+                        <div class="fw-semibold" th:text="${order.customerName}">Customer</div>
+                        <div class="small text-muted" th:text="${order.customer != null ? 'Account: ' + order.customer.username : order.customerPhone}">Phone</div>
+                    </td>
+                    <td th:text="${#temporals.format(order.orderDateTime, 'yyyy-MM-dd HH:mm')}">Date</td>
+                    <td><span class="badge text-bg-secondary" th:text="${#strings.replace(order.status.name(), '_', ' ')}">Status</span></td>
+                    <td th:text="${order.assignedCourier != null ? order.assignedCourier.username : 'Unassigned'}">Courier</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary mb-1" th:href="@{/orders/{id}(id=${order.id})}">Detail</a>
+
+                        <form th:if="${order.status.name() != 'DELIVERED' and order.status.name() != 'CANCELLED'}"
+                              th:action="@{/orders/{id}/assign(id=${order.id})}" method="post" class="d-inline-flex gap-1 mb-1">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <input type="hidden" name="returnTo" value="dashboard">
+                            <select name="courierId" class="form-select form-select-sm" required>
+                                <option th:each="courier : ${couriers}" th:value="${courier.id}" th:text="${courier.username}" th:selected="${order.assignedCourier != null and courier.id == order.assignedCourier.id}"></option>
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary" type="submit">Assign</button>
+                        </form>
+
+                        <form th:if="${order.status.name() == 'PENDING'}" th:action="@{/orders/{id}/approve(id=${order.id})}" method="post" class="d-inline">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <input type="hidden" name="returnTo" value="dashboard">
+                            <button class="btn btn-sm btn-success mb-1" type="submit">Approve</button>
+                        </form>
+                        <form th:if="${order.status.name() != 'DELIVERED' and order.status.name() != 'CANCELLED'}" th:action="@{/orders/{id}/cancel(id=${order.id})}" method="post" class="d-inline">
+                            <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <input type="hidden" name="returnTo" value="dashboard">
+                            <button class="btn btn-sm btn-outline-danger mb-1" type="submit">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(orders)}"><td colspan="6" class="text-center text-muted py-4">No orders found.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Customer Detail')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-0" th:text="${customer.username}">customer</h1>
+            <div class="text-muted" th:text="${'Customer ID: ' + customer.id}">Customer ID</div>
+        </div>
+        <a class="btn btn-outline-secondary" th:href="@{/customers}">Back to Customers</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Order History</h2>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Delivery Info</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Courier</th>
+                        <th>Products</th>
+                        <th class="text-end">Detail</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="order : ${orders}">
+                        <td th:text="${order.id}">1</td>
+                        <td>
+                            <div class="fw-semibold" th:text="${order.customerName}">Name</div>
+                            <div class="small text-muted" th:text="${order.customerPhone}">Phone</div>
+                            <div class="small text-muted" th:text="${order.address}">Address</div>
+                        </td>
+                        <td th:text="${#temporals.format(order.orderDateTime, 'yyyy-MM-dd HH:mm')}">Date</td>
+                        <td><span class="badge text-bg-secondary" th:text="${#strings.replace(order.status.name(), '_', ' ')}">Status</span></td>
+                        <td th:text="${order.assignedCourier != null ? order.assignedCourier.username : 'Unassigned'}">Courier</td>
+                        <td>
+                            <div th:each="product : ${order.products}" th:text="${product.name}">Product</div>
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-secondary" th:href="@{/orders/{id}(id=${order.id})}">Open</a>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(orders)}">
+                        <td colspan="7" class="text-center text-muted py-4">This customer has not placed an order yet.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

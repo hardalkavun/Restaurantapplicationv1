@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Customers')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h3 mb-0">Customers</h1>
+        <a class="btn btn-outline-secondary" th:href="@{/dashboard}">Back to Dashboard</a>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Customer Account</th>
+                    <th>Total Orders</th>
+                    <th>Latest Order</th>
+                    <th>Recent Status</th>
+                    <th class="text-end">Details</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="customer : ${customers}" th:with="orders=${ordersByCustomer[customer.id]}">
+                    <td>
+                        <div class="fw-semibold" th:text="${customer.username}">customer</div>
+                        <div class="small text-muted" th:text="${'ID: ' + customer.id}">ID</div>
+                    </td>
+                    <td th:text="${#lists.size(orders)}">0</td>
+                    <td th:text="${#lists.isEmpty(orders) ? '-' : #temporals.format(orders[0].orderDateTime, 'yyyy-MM-dd HH:mm')}">Date</td>
+                    <td>
+                        <span th:if="${#lists.isEmpty(orders)}" class="text-muted">-</span>
+                        <span th:unless="${#lists.isEmpty(orders)}" class="badge text-bg-secondary" th:text="${#strings.replace(orders[0].status.name(), '_', ' ')}">Status</span>
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" th:href="@{/customers/{id}(id=${customer.id})}">Open</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(customers)}">
+                    <td colspan="5" class="text-center text-muted py-4">No customer accounts found.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

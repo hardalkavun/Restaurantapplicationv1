@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <h1 class="h3 mb-3" th:text="${pageTitle}">Order</h1>
+    <div class="card">
+        <div class="card-body">
+            <form th:action="${orderForm.id == null} ? @{/orders} : @{/orders/{id}(id=${orderForm.id})}" th:object="${orderForm}" method="post">
+                <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="customerName" class="form-label">Customer name</label>
+                        <input id="customerName" th:field="*{customerName}" class="form-control" th:classappend="${#fields.hasErrors('customerName')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{customerName}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="customerPhone" class="form-label">Customer phone</label>
+                        <input id="customerPhone" th:field="*{customerPhone}" class="form-control" th:classappend="${#fields.hasErrors('customerPhone')} ? 'is-invalid'">
+                        <div class="invalid-feedback" th:errors="*{customerPhone}"></div>
+                    </div>
+                    <div class="col-12">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea id="address" th:field="*{address}" class="form-control" rows="2" th:classappend="${#fields.hasErrors('address')} ? 'is-invalid'"></textarea>
+                        <div class="invalid-feedback" th:errors="*{address}"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status" class="form-label">Status</label>
+                        <select id="status" th:field="*{status}" class="form-select" th:classappend="${#fields.hasErrors('status')} ? 'is-invalid'">
+                            <option th:each="status : ${statuses}" th:value="${status}" th:text="${#strings.replace(status.name(), '_', ' ')}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{status}"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="assignedCourierId" class="form-label">Assigned courier</label>
+                        <select id="assignedCourierId" th:field="*{assignedCourierId}" class="form-select">
+                            <option value="">Unassigned</option>
+                            <option th:each="courier : ${couriers}" th:value="${courier.id}" th:text="${courier.username}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="notes" class="form-label">Notes</label>
+                        <input id="notes" th:field="*{notes}" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Products</label>
+                        <div class="border rounded p-3 bg-white" th:classappend="${#fields.hasErrors('productIds')} ? ' border-danger'">
+                            <div class="row g-2">
+                                <div class="col-md-4" th:each="product : ${products}">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" th:field="*{productIds}" th:value="${product.id}" th:id="${'product-' + product.id}">
+                                        <label class="form-check-label" th:for="${'product-' + product.id}">
+                                            <span th:text="${product.name}">Product</span>
+                                            <span class="text-muted" th:text="${' - ' + #numbers.formatDecimal(product.price, 1, 2)}">0.00</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-danger small mt-1" th:errors="*{productIds}"></div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                    <a class="btn btn-outline-secondary" th:href="@{/orders}">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

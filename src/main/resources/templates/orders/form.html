@@ -1,0 +1,82 @@
+<!doctype html>
+<!-- Sipariş düzenleme (klasik form): OrderController GET/POST /orders/{id}/edit. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <section class="page-hero mb-3">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <h1 class="h3 mb-1" th:text="${pageTitle}">Siparişi Düzenle</h1>
+                <div class="subtitle small">Müşteri, kurye ve ürün bilgilerini güncelleyin.</div>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/orders}">
+                <i class="bi bi-arrow-left me-1"></i>Geri
+            </a>
+        </div>
+    </section>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <form th:action="@{/orders/{id}(id=${orderForm.id})}" th:object="${orderForm}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Müşteri adı</label>
+                        <input th:field="*{customerName}" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Telefon</label>
+                        <input th:field="*{customerPhone}" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Adres</label>
+                        <textarea th:field="*{address}" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Durum</label>
+                        <select th:field="*{status}" class="form-select">
+                            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.displayName}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Kurye</label>
+                        <select th:field="*{assignedCourierId}" class="form-select">
+                            <option value="">Atanmadı</option>
+                            <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${c.username}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Not</label>
+                        <input th:field="*{notes}" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Ürünler</label>
+                        <div class="border rounded-3 p-3 bg-white">
+                            <div class="row g-2">
+                                <div class="col-md-4" th:each="p : ${products}">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" th:field="*{productIds}" th:value="${p.id}" th:id="${'prod-'+p.id}">
+                                        <label class="form-check-label" th:for="${'prod-'+p.id}">
+                                            <span th:text="${p.name}"></span>
+                                            <small class="text-muted" th:text="' - ' + ${#numbers.formatDecimal(p.price,1,2)} + ' ₺'"></small>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-danger small" th:errors="*{productIds}"></div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-4">
+                    <button class="btn btn-primary" type="submit">Kaydet</button>
+                    <a class="btn btn-outline-secondary" th:href="@{/orders}">Vazgeç</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

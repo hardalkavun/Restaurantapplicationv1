@@ -1,0 +1,31 @@
+<!doctype html>
+<!-- Yetkisiz erişim: SecurityConfig accessDeniedPage /access-denied. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Erişim Reddedildi')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <section class="page-hero mb-3">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h1 class="h3 mb-1">Erişim reddedildi</h1>
+                <div class="subtitle small">Bu sayfayı açma yetkiniz yok.</div>
+            </div>
+            <a class="btn btn-primary" th:href="@{/}">
+                <i class="bi bi-arrow-left me-1"></i>Geri Dön
+            </a>
+        </div>
+    </section>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="alert alert-danger mb-0">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Bu sayfaya erişim izniniz yok.
+            </div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

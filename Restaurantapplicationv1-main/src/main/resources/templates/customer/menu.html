@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Menu')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Menu</h1>
+        <a class="btn btn-primary" th:href="@{/customer/orders/new}">Place Order</a>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-6 col-lg-4" th:each="product : ${products}">
+            <div class="card h-100">
+                <img th:if="${product.hasImage()}" class="card-img-top" style="height: 180px; object-fit: cover;" th:src="@{/products/{id}/image(id=${product.id})}" th:alt="${product.name}">
+                <div th:unless="${product.hasImage()}" class="d-flex align-items-center justify-content-center bg-white border-bottom" style="height: 180px;">No image</div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between gap-2">
+                        <h2 class="h5 mb-1" th:text="${product.name}">Product</h2>
+                        <span class="fw-semibold" th:text="${#numbers.formatDecimal(product.price, 1, 2)}">0.00</span>
+                    </div>
+                    <div class="text-muted small mb-2" th:text="${product.category.name}">Category</div>
+                    <p class="mb-0" th:text="${product.description}">Description</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-12" th:if="${#lists.isEmpty(products)}">
+            <div class="alert alert-info">No active menu products found.</div>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

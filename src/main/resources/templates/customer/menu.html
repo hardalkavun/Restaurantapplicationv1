@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Menü')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <section class="page-hero mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h1 class="h3 mb-1">Menü</h1>
+                <div class="subtitle small">Ürünleri seçin, adresinizi yazın ve siparişinizi gönderin.</div>
+            </div>
+            <a class="btn btn-outline-secondary" th:href="@{/customer/orders}">
+                <i class="bi bi-receipt me-1"></i>Siparişlerim
+            </a>
+        </div>
+    </section>
+
+    <form th:action="@{/customer/orders}" th:object="${orderForm}" method="post" class="row g-4">
+        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        <div class="col-lg-8">
+            <div class="row g-3">
+                <div class="col-md-6" th:each="product : ${products}">
+                    <label class="card product-card h-100 order-choice">
+                        <div class="product-image-wrap mb-3">
+                            <img th:if="${product.hasImage()}" class="product-image" th:src="@{/products/{id}/image(id=${product.id})}" th:alt="${product.name}">
+                            <div th:unless="${product.hasImage()}" class="product-image product-placeholder d-flex align-items-center justify-content-center text-muted">
+                                Görsel yok
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-start gap-2">
+                            <input class="form-check-input mt-1 product-selector"
+                                   type="checkbox"
+                                   th:field="*{productIds}"
+                                   th:value="${product.id}"
+                                   th:attr="data-price=${product.price}">
+                            <div>
+                                <div class="fw-semibold" th:text="${product.name}">Ürün</div>
+                                <div class="small text-muted line-clamp-2" th:text="${product.description}">Açıklama</div>
+                                <div class="price mt-2" th:text="${#numbers.formatDecimal(product.price, 1, 2)} + ' ₺'">0 ₺</div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div class="text-danger small mt-2" th:if="${#fields.hasErrors('productIds')}" th:errors="*{productIds}"></div>
+        </div>
+
+        <aside class="col-lg-4">
+            <div class="card cart-card shadow-sm sticky-lg-top">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Teslimat Bilgileri</h2>
+                    <div class="mb-3">
+                        <label class="form-label">Ad soyad</label>
+                        <input th:field="*{customerName}" class="form-control" autocomplete="name">
+                        <div class="text-danger small" th:if="${#fields.hasErrors('customerName')}" th:errors="*{customerName}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Telefon</label>
+                        <input th:field="*{customerPhone}" class="form-control" autocomplete="tel">
+                        <div class="text-danger small" th:if="${#fields.hasErrors('customerPhone')}" th:errors="*{customerPhone}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Adres</label>
+                        <textarea th:field="*{address}" class="form-control" rows="3"></textarea>
+                        <div class="text-danger small" th:if="${#fields.hasErrors('address')}" th:errors="*{address}"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Not</label>
+                        <textarea th:field="*{notes}" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="border rounded-3 p-3 mb-3 bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Toplam</span>
+                            <strong id="orderTotal">0.00 ₺</strong>
+                        </div>
+                    </div>
+
+                    <h2 class="h5 mb-3">Ödeme</h2>
+                    <div class="mb-3">
+                        <label class="form-label">Ödeme yöntemi</label>
+                        <select id="paymentMethod" class="form-select" name="paymentMethod">
+                            <option value="CARD">Kart ile ödeme</option>
+                            <option value="CASH">Kapıda ödeme</option>
+                        </select>
+                    </div>
+                    <div id="cardPaymentFields">
+                        <div class="mb-3">
+                            <label class="form-label">Kart üzerindeki ad</label>
+                            <input class="form-control" name="cardHolder" autocomplete="cc-name">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Kart numarası</label>
+                            <input class="form-control" name="cardNumber" inputmode="numeric" autocomplete="cc-number" maxlength="19" placeholder="0000 0000 0000 0000">
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-7">
+                                <label class="form-label">Son kullanma</label>
+                                <input class="form-control" name="cardExpiry" autocomplete="cc-exp" placeholder="AA/YY">
+                            </div>
+                            <div class="col-5">
+                                <label class="form-label">CVV</label>
+                                <input class="form-control" name="cardCvv" inputmode="numeric" autocomplete="cc-csc" maxlength="4">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-bag-check me-1"></i>Sipariş Ver
+                    </button>
+                </div>
+            </div>
+        </aside>
+    </form>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+<script>
+    const productSelectors = document.querySelectorAll('.product-selector');
+    const totalEl = document.getElementById('orderTotal');
+    const paymentMethod = document.getElementById('paymentMethod');
+    const cardPaymentFields = document.getElementById('cardPaymentFields');
+
+    function updateTotal() {
+        const total = Array.from(productSelectors)
+            .filter(input => input.checked)
+            .reduce((sum, input) => sum + Number(input.dataset.price || 0), 0);
+        totalEl.textContent = total.toFixed(2) + ' ₺';
+    }
+
+    function updatePaymentFields() {
+        cardPaymentFields.classList.toggle('d-none', paymentMethod.value === 'CASH');
+    }
+
+    productSelectors.forEach(input => input.addEventListener('change', updateTotal));
+    paymentMethod.addEventListener('change', updatePaymentFields);
+    updateTotal();
+    updatePaymentFields();
+</script>
+</body>
+</html>

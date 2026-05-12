@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Orders')}"></head>
+<body>
+<div th:replace="~{fragments/layout :: navbar}"></div>
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">My Orders</h1>
+        <a class="btn btn-primary" th:href="@{/customer/orders/new}">New Order</a>
+    </div>
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                <tr><th>ID</th><th>Date</th><th>Status</th><th>Courier</th><th class="text-end">Actions</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="order : ${orders}">
+                    <td th:text="${order.id}">1</td>
+                    <td th:text="${#temporals.format(order.orderDateTime, 'yyyy-MM-dd HH:mm')}">Date</td>
+                    <td><span class="badge text-bg-secondary" th:text="${#strings.replace(order.status.name(), '_', ' ')}">Status</span></td>
+                    <td th:text="${order.assignedCourier != null ? order.assignedCourier.username : 'Not assigned yet'}">Courier</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" th:href="@{/customer/orders/{id}(id=${order.id})}">Detail</a>
+                        <a th:if="${order.status.name() == 'PENDING' or order.status.name() == 'PREPARING'}"
+                           class="btn btn-sm btn-outline-primary"
+                           th:href="@{/customer/orders/{id}/edit(id=${order.id})}">Edit</a>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(orders)}"><td colspan="5" class="text-center text-muted py-4">No orders yet.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>

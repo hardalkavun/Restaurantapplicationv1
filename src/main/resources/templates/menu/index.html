@@ -1,0 +1,282 @@
+<!doctype html>
+<!-- Halka menü: MenuController /menu; checkout POST /menu/checkout. -->
+<html lang="tr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${pageTitle})}"></head>
+<body class="food-background">
+<div th:replace="~{fragments/layout :: navbar}"></div>
+
+<main class="container page-shell py-4">
+    <div th:replace="~{fragments/layout :: alerts}"></div>
+
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+        <div>
+            <h1 class="h3 mb-1">Menü</h1>
+            <div class="text-muted small">Sevdiğiniz ürünleri seçip kolayca sipariş oluşturun.</div>
+        </div>
+        <form class="d-flex gap-2" th:action="@{/menu}" method="get">
+            <input name="q" class="form-control" style="min-width:220px" placeholder="Yemek veya içecek ara..."
+                   th:value="${q}">
+            <select name="categoryId" class="form-select" style="min-width:220px">
+                <option value="">Tüm kategoriler</option>
+                <option th:each="c : ${categories}" th:value="${c.id}" th:text="${c.name}"
+                        th:selected="${categoryId != null and categoryId == c.id}"></option>
+            </select>
+            <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search me-1"></i>Ara</button>
+            <a class="btn btn-outline-secondary" th:href="@{/menu}">Temizle</a>
+        </form>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="row g-3">
+                <div class="col-12 col-md-6 col-xl-4" th:each="product : ${products}">
+                    <div class="card product-card h-100">
+                        <div class="product-image-wrap">
+                            <img th:if="${product.hasImage()}"
+                                 class="product-image"
+                                 th:src="@{/products/{id}/image(id=${product.id})}"
+                                 th:alt="${product.name}">
+                            <div th:unless="${product.hasImage()}"
+                                 class="product-image product-placeholder d-flex align-items-center justify-content-center text-muted small user-select-none"
+                                 role="img"
+                                 th:attr="aria-label=${'Görsel yok: ' + product.name}">
+                                <span><i class="bi bi-image me-1"></i>Görsel yok</span>
+                            </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <h2 class="h6 mb-1" th:text="${product.name}">Ürün</h2>
+                                <span class="badge text-bg-light border" th:text="${product.category.name}">Kategori</span>
+                            </div>
+                            <div class="small text-muted line-clamp-2 mb-3"
+                                 th:text="${product.description != null ? product.description : '—'}">Desc</div>
+                            <div class="mt-auto d-flex align-items-center justify-content-between">
+                                <div class="price" th:text="${#numbers.formatDecimal(product.price,1,2)} + ' ₺'">0 ₺</div>
+                                <button type="button" class="btn btn-sm btn-primary add-to-cart"
+                                        th:data-id="${product.id}"
+                                        th:data-name="${product.name}"
+                                        th:data-price="${product.price}">
+                                    <i class="bi bi-cart-plus me-1"></i>Ekle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12" th:if="${#lists.isEmpty(products)}">
+                    <div class="alert alert-light border mb-0">Ürün bulunamadı.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card sticky-top cart-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h2 class="h5 mb-0"><i class="bi bi-basket2 me-2"></i>Sepet</h2>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="clearCartBtn">
+                            Temizle
+                        </button>
+                    </div>
+
+                    <ul id="cartItems" class="list-group mb-3"></ul>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Toplam</span>
+                        <strong id="cartTotal">0.00 ₺</strong>
+                    </div>
+
+                    <form id="orderForm" th:action="@{/menu/checkout}" method="post" novalidate>
+                        <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+                               th:value="${_csrf.token}"/>
+                        <div id="productIdsContainer"></div>
+
+                        <div class="mb-2">
+                            <label class="form-label">Ad soyad</label>
+                            <input name="customerName" class="form-control" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Telefon</label>
+                            <input name="customerPhone" class="form-control" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Adres</label>
+                            <textarea name="address" class="form-control" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Not</label>
+                            <input name="notes" class="form-control" placeholder="İsteğe bağlı">
+                        </div>
+
+                        <div class="alert alert-danger py-2 small d-none" id="cartError"></div>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-credit-card me-1"></i>Sipariş Ver
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const STORAGE_KEY = 'restaurant_cart_v1';
+
+    function loadCart() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (e) {
+            return [];
+        }
+    }
+
+    function saveCart(cart) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+    }
+
+    const cart = loadCart();
+    const cartItemsEl = document.getElementById('cartItems');
+    const cartTotalEl = document.getElementById('cartTotal');
+    const productIdsContainer = document.getElementById('productIdsContainer');
+    const clearCartBtn = document.getElementById('clearCartBtn');
+    const cartErrorEl = document.getElementById('cartError');
+    const orderForm = document.getElementById('orderForm');
+
+    document.querySelectorAll('.add-to-cart').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = String(btn.dataset.id);
+            const name = btn.dataset.name;
+            const price = Number(btn.dataset.price);
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                cart.push({id, name, price, quantity: 1});
+            }
+            saveCart(cart);
+            renderCart();
+        });
+    });
+
+    clearCartBtn.addEventListener('click', () => {
+        cart.splice(0, cart.length);
+        saveCart(cart);
+        renderCart();
+    });
+
+    orderForm.addEventListener('submit', (e) => {
+        hideError();
+        if (cart.length === 0) {
+            e.preventDefault();
+            showError('Sepetiniz boş. Lütfen en az bir ürün ekleyin.');
+            return;
+        }
+        // basic HTML validation + cart check
+        if (!orderForm.checkValidity()) {
+            e.preventDefault();
+            orderForm.classList.add('was-validated');
+            showError('Lütfen zorunlu müşteri bilgilerini doldurun.');
+            return;
+        }
+    });
+
+    function showError(msg) {
+        cartErrorEl.textContent = msg;
+        cartErrorEl.classList.remove('d-none');
+    }
+
+    function hideError() {
+        cartErrorEl.classList.add('d-none');
+        cartErrorEl.textContent = '';
+    }
+
+    function changeQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (!item) return;
+        item.quantity += delta;
+        if (item.quantity <= 0) {
+            const idx = cart.findIndex(i => i.id === id);
+            if (idx >= 0) cart.splice(idx, 1);
+        }
+        saveCart(cart);
+        renderCart();
+    }
+
+    function renderCart() {
+        cartItemsEl.innerHTML = '';
+        productIdsContainer.innerHTML = '';
+        let total = 0;
+
+        if (cart.length === 0) {
+            const empty = document.createElement('li');
+            empty.className = 'list-group-item text-muted small';
+            empty.textContent = 'Sepetiniz boş.';
+            cartItemsEl.appendChild(empty);
+        }
+
+        cart.forEach(item => {
+            total += item.price * item.quantity;
+
+            // hidden inputs (one per quantity)
+            for (let i = 0; i < item.quantity; i++) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'productIds';
+                input.value = item.id;
+                productIdsContainer.appendChild(input);
+            }
+
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex align-items-center justify-content-between gap-2';
+            li.innerHTML = `
+                <div class="cart-item-left">
+                    <div class="fw-semibold small">${escapeHtml(item.name)}</div>
+                    <div class="text-muted small">${(item.price).toFixed(2)} ₺</div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Adet">
+                        <button type="button" class="btn btn-outline-secondary" data-action="minus" data-id="${item.id}">-</button>
+                        <button type="button" class="btn btn-outline-secondary disabled">${item.quantity}</button>
+                        <button type="button" class="btn btn-outline-secondary" data-action="plus" data-id="${item.id}">+</button>
+                    </div>
+                    <div class="fw-semibold small" style="min-width:70px; text-align:right;">
+                        ${(item.price * item.quantity).toFixed(2)} ₺
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-action="remove" data-id="${item.id}">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            `;
+
+            li.querySelectorAll('button[data-action]').forEach(b => {
+                b.addEventListener('click', () => {
+                    const action = b.dataset.action;
+                    const id = b.dataset.id;
+                    if (action === 'minus') changeQty(id, -1);
+                    if (action === 'plus') changeQty(id, +1);
+                    if (action === 'remove') changeQty(id, -999);
+                });
+            });
+
+            cartItemsEl.appendChild(li);
+        });
+
+        cartTotalEl.textContent = total.toFixed(2) + ' ₺';
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    renderCart();
+</script>
+
+<script th:replace="~{fragments/layout :: scripts}"></script>
+</body>
+</html>
